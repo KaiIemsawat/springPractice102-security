@@ -46,11 +46,24 @@ public class DemoSecurityConfig {
 
 //    The code above is replaced bt the next block of code
 
+
 //    Add support for JDBC. No more hard code
 //    Tell Spring Security to use JDBC authentication with data source
     @Bean
     public UserDetailsManager userDetailsManager(DataSource dataSource){
-        return new JdbcUserDetailsManager(dataSource);
+        JdbcUserDetailsManager jdbcUserDetailsManager = new JdbcUserDetailsManager(dataSource);
+
+//        define query to retrieve a user by username
+        jdbcUserDetailsManager.setUsersByUsernameQuery(
+                "SELECT user_id, pw, active FROM members WHERE user_id=?"
+        );
+
+//        define query to retrieve the authorities/role by username
+        jdbcUserDetailsManager.setAuthoritiesByUsernameQuery(
+                "SELECT user_id, role FROM roles WHERE user_id=?"
+        );
+
+        return jdbcUserDetailsManager;
     }
 
 
