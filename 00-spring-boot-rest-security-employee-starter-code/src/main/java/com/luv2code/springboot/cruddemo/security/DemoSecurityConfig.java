@@ -5,42 +5,54 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.provisioning.JdbcUserDetailsManager;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
+
+import javax.sql.DataSource;
 
 @Configuration
 public class DemoSecurityConfig {
+
 /*
     Since username and password are declared here,
     Spring Boot will not use the username and password from application.properties
 */
+//    @Bean
+////    Spring Security’s InMemoryUserDetailsManager implements UserDetailsService to provide support
+////    for username/password based authentication that is stored in memory
+//    public InMemoryUserDetailsManager userDetailsManager() {
+//
+////        UserDetails is returned by the UserDetailsService.
+////        The DaoAuthenticationProvider validates the UserDetails and then returns an Authentication
+////        that has a principal that is the UserDetails returned by the configured UserDetailsService.
+//        UserDetails john = User.builder()
+//                .username("john").password("{noop}test123") // {noop} <- plain text
+//                .roles("EMPLOYEE")
+//                .build();
+//
+//        UserDetails mary = User.builder()
+//                .username("mary").password("{noop}test123")
+//                .roles("EMPLOYEE", "MANAGER")
+//                .build();
+//
+//        UserDetails susan = User.builder()
+//                .username("susan").password("{noop}test123")
+//                .roles("EMPLOYEE", "MANAGER", "ADMIN")
+//                .build();
+//
+//        return new InMemoryUserDetailsManager(john, mary, susan);
+//    }
+
+//    The code above is replaced bt the next block of code
+
+//    Add support for JDBC. No more hard code
+//    Tell Spring Security to use JDBC authentication with data source
     @Bean
-//    Spring Security’s InMemoryUserDetailsManager implements UserDetailsService to provide support
-//    for username/password based authentication that is stored in memory
-    public InMemoryUserDetailsManager userDetailsManager() {
-
-//        UserDetails is returned by the UserDetailsService.
-//        The DaoAuthenticationProvider validates the UserDetails and then returns an Authentication
-//        that has a principal that is the UserDetails returned by the configured UserDetailsService.
-        UserDetails john = User.builder()
-                .username("john").password("{noop}test123") // {noop} <- plain text
-                .roles("EMPLOYEE")
-                .build();
-
-        UserDetails mary = User.builder()
-                .username("mary").password("{noop}test123")
-                .roles("EMPLOYEE", "MANAGER")
-                .build();
-
-        UserDetails susan = User.builder()
-                .username("susan").password("{noop}test123")
-                .roles("EMPLOYEE", "MANAGER", "ADMIN")
-                .build();
-
-        return new InMemoryUserDetailsManager(john, mary, susan);
+    public UserDetailsManager userDetailsManager(DataSource dataSource){
+        return new JdbcUserDetailsManager(dataSource);
     }
+
 
 /*
     Restrict accessing based on roles
@@ -56,6 +68,11 @@ public class DemoSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/employees/**").hasRole("ADMIN")
         );
 
+//      Two asterisks, **, works like * but crosses directory boundaries.
+//      This syntax is generally used for matching complete paths.
+//      /home/*/*       Matches /home/gus/data on UNIX platforms
+//      /home/**        Matches /home/gus and /home/gus/data on UNIX platforms
+
 //        use HTTP Basic authentication
         httpSecurity.httpBasic(Customizer.withDefaults());
 
@@ -65,4 +82,6 @@ public class DemoSecurityConfig {
 
         return httpSecurity.build();
     }
+
+
 }
